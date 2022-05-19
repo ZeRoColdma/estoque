@@ -1,14 +1,12 @@
 import { compare } from "bcrypt";
 import { sign } from "jsonwebtoken";
-import { User } from "../../database/entity/Users";
-import { getRepository, Repository } from "typeorm";
 import { Request, Response } from "express";
+import { prismaClient } from "../../database/prismaClient";
 
 class AuthUser {
   async signIn(request: Request, response: Response) {
     const { email, password } = request.body;
-    const usersRepository: Repository<User> = getRepository(User);
-    const user = await await usersRepository.findOne({ where: { email } });
+    const user = await prismaClient.user.findFirst({ where: { email } });
     if (!user) {
       return response.status(400).json({ error: "User not found" });
     }

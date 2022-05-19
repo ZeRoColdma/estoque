@@ -1,20 +1,17 @@
-import { User } from "../../database/entity/Users";
-import { getRepository, Repository } from "typeorm";
 import { Request, Response } from "express";
 import { hash } from "bcrypt";
+import { prismaClient } from "../../database/prismaClient";
 
 class UserController {
   async index(request: Request, response: Response) {
-    const usersRepository: Repository<User> = getRepository(User);
-    const users = await usersRepository.find();
+    const users = await prismaClient.user.findMany();
     return response.json(users);
   }
 
   async store(request: Request, response: Response) {
     const { name, email, password } = request.body;
-    const usersRepository: Repository<User> = getRepository(User);
 
-    const userExists = await usersRepository.findOne({
+    const userExists = await prismaClient.user.findFirst({
       where: { email },
     });
 
@@ -24,18 +21,22 @@ class UserController {
 
     const hashedPassword = await hash(password, 8);
 
-    const user = usersRepository.create({
-      name,
-      email,
-      password: hashedPassword,
+    const user = await prismaClient.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+      },
     });
-    await usersRepository.save(user);
     return response.json(user);
   }
 
-  async findById(id: string): Promise<User> {
-    const usersRepository: Repository<User> = getRepository(User);
-    const user = await usersRepository.findOne(id);
+  async findById(id: string) {
+    const user = await prismaClient.user.findFirst({
+      where: {
+        id,
+      },
+    });
     return user;
   }
 }
